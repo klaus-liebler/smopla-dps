@@ -19,6 +19,8 @@
 #include "ili9163c.hh"
 #include "ili9341.hh"
 #include "st7789.hh"
+#include "Screen.hh"
+#include "CVScreen.hh"
 #define PROGMEM
 #include "Fonts/FreeSans12pt7b.h"
 
@@ -41,11 +43,13 @@ constexpr double mV_digit = (double) REFERENCE_VOLTAGE_MILLIVOLTS
 alignas(4) __IO uint16_t adcbuffer[ADCBUFFER_SIZE]; // ADC conversion results table of regular group,
 __IO uint32_t aCounter = 0;
 
+
 //TFT_ILI9341 tft(SPI2, 5, 240, 320, DisplayRotation::ROT0, Pin::NO_PIN, Pin::PB14, Pin::PB07, Pin::PB12);
 TFT_ILI9163C tft(SPI2, 5, 130, 132, DisplayRotation::ROT0, LCD_CS, LCD_DC,
 		LCD_BL, LCD_RST);
 //TFT_ST7789 tft(SPI2, 5, 240, 240, DisplayRotation::ROT0, Pin::NO_PIN, Pin::PB14, Pin::PB07, Pin::PB12);
-
+CVScreen cvscreen(&tft);
+Screen *activeScreen = NULL;
 PowerStageController pwst(PWR_PWR);
 RotaryEncoder rotenc;
 
@@ -137,13 +141,8 @@ extern "C" void EXTI9_5_IRQHandler(void)
 {
 	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_8))
 	{
-		rotenc.IrqCallback((Gpio::Get(Pin::PB08)<<1) + Gpio::Get(Pin::PB09));
+		rotenc.IrqCallback(Gpio::Get(Pin::PB08), Gpio::Get(Pin::PB09));
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_8);
-	}
-	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_9))
-	{
-		rotenc.IrqCallback((Gpio::Get(Pin::PB08)<<1) + Gpio::Get(Pin::PB09));
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_9);
 	}
 	return;
 }
@@ -367,14 +366,14 @@ void Configure_ROTENC_BUTTONS()
 	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_8|LL_EXTI_LINE_9);
 	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_9);
 	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_8);
-	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_9);
+	//LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_9);
 	LL_EXTI_EnableFallingTrig_0_31(LL_EXTI_LINE_8);
-	LL_EXTI_EnableFallingTrig_0_31(LL_EXTI_LINE_9);
+	//LL_EXTI_EnableFallingTrig_0_31(LL_EXTI_LINE_9);
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_SetPriority(EXTI9_5_IRQn,3);
 }
 
-const char* pattern = "Val %d";
+const char* pattern = "V%d";
 
 int main() {
 	SystemClock_HSI24MHz_Config();
@@ -395,14 +394,13 @@ int main() {
 	tft.setColors(MAGENTA, GREEN);
 	tft.begin();
 	tft.backlight(true);
-	tft.fillRect(10, 10, 40, 40);
 	tft.setFont(&FreeSans12pt7b);
-	int val =42;
-
+	cvscreen.SetActive();
+	activeScreen=&cvscreen;
 	while (true) {
 		while(!tft.DMAIdle()){__NOP();}
-		tft.printString(20, 100, 10, 128, 80, 120, Anchor::BOTTOM_LEFT, pattern, rotenc.GetValue());
-		LL_mDelay(500);
-		val++;
+		//tft.printString(20, 100, 10, 128, 80, 120, Anchor::BOTTOM_LEFT, pattern, rotenc.GetValue());
+		//tft.printString(100, 100, 0, 100, 80, 120, Anchor::BOTTOM_RIGHT, pattern, val);
+		activeScreen->OnRotaryTurn(0, rotenc.GetDiff());
 	}
 }

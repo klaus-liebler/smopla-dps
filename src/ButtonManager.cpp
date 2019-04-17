@@ -74,13 +74,13 @@ void ButtonManager::Update()
 		prevROT_SW=true;
 	}
 }
-uint8_t ButtonManager::GetShortPresses(){
+uint32_t ButtonManager::GetShortPresses(){
 	uint8_t tmp = shortEvents;
 	shortEvents=0;
 	return tmp;
 
 }
-uint8_t ButtonManager::GetLongPresses()
+uint32_t ButtonManager::GetLongPresses()
 {
 	uint8_t tmp = longEvents;
 	longEvents=0;

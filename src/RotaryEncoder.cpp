@@ -24,16 +24,13 @@ int32_t RotaryEncoder::GetValue()
 
 }
 
-void RotaryEncoder::IrqCallback(uint8_t ab)
+void RotaryEncoder::IrqCallback(bool a, bool b)
 {
-	if(SysTick->VAL-timestamp < 10)
-	{
-		return;
+	if (a != a0) {              // A changed
+		a0 = a;
+		if (b != c0) {
+			c0 = b;
+			value+=(a == b)?1:-1;
+		}
 	}
-	timestamp=SysTick->VAL;
-	if((prevAB==0b00 && ab==0b10) || (prevAB==0b10 && ab==0b11) || (prevAB==0b11 && ab==0b01) || (prevAB==0b01 && ab== 0b00))
-		value++;
-	if((prevAB==0b00 && ab==0b01) || (prevAB==0b01 && ab==0b11) || (prevAB==0b11 && ab==0b10) || (prevAB==0b10 && ab== 0b00))
-		value--;
-	prevAB=ab;
 }

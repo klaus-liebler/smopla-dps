@@ -7,8 +7,8 @@ public:
 	ButtonManager();
 	virtual ~ButtonManager();
 	void Update();
-	uint8_t GetShortPresses();
-	uint8_t GetLongPresses();
+	uint32_t GetShortPresses();
+	uint32_t GetLongPresses();
 private:
 	bool prevSW_ONOFF=true;
 	bool prevSW_DOWN=true;
@@ -17,8 +17,8 @@ private:
 	bool prevROT_SW=true;
 	uint32_t timeROT_SW=0;
 
-	uint8_t shortEvents=0;
-	uint8_t longEvents=0;
+	uint32_t shortEvents=0;
+	uint32_t longEvents=0;
 
 
 };
